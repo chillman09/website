@@ -1,5 +1,5 @@
 -- ============================================================
--- SPARK PLUGIN v2.0 — spark-roblox.vercel.app
+-- SPARK PLUGIN v2.0 — website-six-bay-23.vercel.app
 -- Install: Plugins → Manage Plugins → Install from file
 -- ============================================================
 local toolbar   = plugin:CreateToolbar("Spark")
@@ -128,7 +128,7 @@ body.Parent = main
 local tokenLbl = Instance.new("TextLabel")
 tokenLbl.Size = UDim2.new(1,0,0,16)
 tokenLbl.BackgroundTransparency = 1
-tokenLbl.Text = "Session Token — get this from spark-roblox.vercel.app"
+tokenLbl.Text = "Session Token — get this from website-six-bay-23.vercel.app"
 tokenLbl.TextColor3 = C.muted
 tokenLbl.TextSize = 11
 tokenLbl.Font = Enum.Font.Gotham
@@ -173,7 +173,7 @@ local logLbl = Instance.new("TextLabel")
 logLbl.Size = UDim2.new(1,0,0,20)
 logLbl.Position = UDim2.new(0,0,0,58)
 logLbl.BackgroundTransparency = 1
-logLbl.Text = "Open spark-roblox.vercel.app in your browser, then press Connect."
+logLbl.Text = "Open website-six-bay-23.vercel.app in your browser, then press Connect."
 logLbl.TextColor3 = C.muted
 logLbl.TextSize = 11
 logLbl.Font = Enum.Font.Gotham
@@ -352,10 +352,10 @@ local function connect()
 	end)
 
 	if ok and result and result.valid then
-		setStatus(true, "✅ Connected as " .. (result.user and result.user.username or "user") .. " — chat at spark-roblox.vercel.app")
+		setStatus(true, "✅ Connected as " .. (result.user and result.user.username or "user") .. " — chat at website-six-bay-23.vercel.app")
 		startPolling()
 	else
-		setStatus(false, "❌ Invalid token. Get yours at spark-roblox.vercel.app")
+		setStatus(false, "❌ Invalid token. Get yours at website-six-bay-23.vercel.app")
 	end
 end
 
@@ -374,7 +374,7 @@ end)
 
 webBtn.MouseButton1Click:Connect(function()
 	-- Can't open URLs from plugins directly, show the URL
-	setLog("🌐 Visit: spark-roblox.vercel.app to chat with AI")
+	setLog("🌐 Visit: website-six-bay-23.vercel.app to chat with AI")
 end)
 
 -- ============================================================
@@ -388,4 +388,4 @@ end
 -- STARTUP
 -- ============================================================
 print("⚡ Spark Plugin " .. VERSION .. " loaded!")
-print("   Visit spark-roblox.vercel.app to get started")
+print("   Visit website-six-bay-23.vercel.app to get started")
