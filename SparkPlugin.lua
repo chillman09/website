@@ -1,10 +1,10 @@
 -- ============================================================
--- SPARK PLUGIN v2.0 — website-six-bay-23.vercel.app
--- Install: Plugins → Manage Plugins → Install from file
+-- SPARK PLUGIN v2.1 — website-six-bay-23.vercel.app
+-- Right-click > Save as Local Plugin
 -- ============================================================
 local toolbar   = plugin:CreateToolbar("Spark")
 local toggleBtn = toolbar:CreateButton("Spark","Open Spark","")
-local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 520, 160, 520, 160)
+local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 520, 175, 520, 175)
 local widget    = plugin:CreateDockWidgetPluginGui("SparkV2", widgetInfo)
 widget.Title    = "Spark"
 widget.Enabled  = false
@@ -19,16 +19,16 @@ local CHS  = game:GetService("ChangeHistoryService")
 local SES  = game:GetService("ScriptEditorService")
 local SSS  = game:GetService("ServerScriptService")
 
-local BACKEND = "https://alert-harmony-production.up.railway.app"
-local VERSION = "v2.0.0"
-local POLL_INTERVAL = 4 -- seconds
+local BACKEND        = "https://alert-harmony-production.up.railway.app"
+local VERSION        = "v2.1.0"
+local POLL_INTERVAL  = 4   -- seconds between action polls
+local CTX_INTERVAL   = 10  -- seconds between context pushes
 
--- State
-local sessionToken = ""
-local isConnected  = false
-local pollLoop     = nil
+local sessionToken   = ""
+local isConnected    = false
+local pollLoop       = nil
+local contextLoop    = nil
 
--- Load saved token
 local function loadToken()
 	local ok, v = pcall(function() return plugin:GetSetting("sparkToken") end)
 	return (ok and type(v)=="string") and v or ""
@@ -36,11 +36,10 @@ end
 local function saveToken(t)
 	pcall(function() plugin:SetSetting("sparkToken", t) end)
 end
-
 sessionToken = loadToken()
 
 -- ============================================================
--- UI
+-- UI COLORS
 -- ============================================================
 local C = {
 	bg      = Color3.fromRGB(10, 10, 16),
@@ -50,9 +49,19 @@ local C = {
 	text    = Color3.fromRGB(220, 220, 240),
 	muted   = Color3.fromRGB(90, 90, 120),
 	success = Color3.fromRGB(62, 207, 142),
-	error   = Color3.fromRGB(255, 77, 109),
+	err     = Color3.fromRGB(255, 77, 109),
+	info    = Color3.fromRGB(106, 176, 255),
 }
 
+local function uiCorner(p, r)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, r or 8)
+	c.Parent = p
+end
+
+-- ============================================================
+-- UI BUILD
+-- ============================================================
 local main = Instance.new("Frame")
 main.Size = UDim2.new(1,0,1,0)
 main.BackgroundColor3 = C.bg
@@ -66,16 +75,9 @@ topBar.BackgroundColor3 = C.surface
 topBar.BorderSizePixel = 0
 topBar.Parent = main
 
-local function uiCorner(p, r)
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, r or 8)
-	c.Parent = p
-end
-
--- Logo area
 local logo = Instance.new("TextLabel")
-logo.Size = UDim2.new(0, 120, 1, 0)
-logo.Position = UDim2.new(0, 14, 0, 0)
+logo.Size = UDim2.new(0,160,1,0)
+logo.Position = UDim2.new(0,14,0,0)
 logo.BackgroundTransparency = 1
 logo.Text = "⚡ Spark  " .. VERSION
 logo.TextColor3 = C.accent
@@ -84,18 +86,17 @@ logo.Font = Enum.Font.GothamBold
 logo.TextXAlignment = Enum.TextXAlignment.Left
 logo.Parent = topBar
 
--- Status dot + label
 local statusDot = Instance.new("Frame")
 statusDot.Size = UDim2.new(0,8,0,8)
-statusDot.Position = UDim2.new(0.5,-60,0.5,-4)
+statusDot.Position = UDim2.new(0.5,-55,0.5,-4)
 statusDot.BackgroundColor3 = C.muted
 statusDot.BorderSizePixel = 0
 statusDot.Parent = topBar
 uiCorner(statusDot, 99)
 
 local statusLbl = Instance.new("TextLabel")
-statusLbl.Size = UDim2.new(0,120,1,0)
-statusLbl.Position = UDim2.new(0.5,-48,0,0)
+statusLbl.Size = UDim2.new(0,110,1,0)
+statusLbl.Position = UDim2.new(0.5,-43,0,0)
 statusLbl.BackgroundTransparency = 1
 statusLbl.Text = "Disconnected"
 statusLbl.TextColor3 = C.muted
@@ -104,10 +105,9 @@ statusLbl.Font = Enum.Font.GothamBold
 statusLbl.TextXAlignment = Enum.TextXAlignment.Left
 statusLbl.Parent = topBar
 
--- Connect / Disconnect button
 local connectBtn = Instance.new("TextButton")
-connectBtn.Size = UDim2.new(0, 96, 0, 28)
-connectBtn.Position = UDim2.new(1,-114,0.5,-14)
+connectBtn.Size = UDim2.new(0,96,0,28)
+connectBtn.Position = UDim2.new(1,-110,0.5,-14)
 connectBtn.BackgroundColor3 = C.accent
 connectBtn.TextColor3 = Color3.fromRGB(12,12,12)
 connectBtn.Text = "Connect"
@@ -119,29 +119,29 @@ uiCorner(connectBtn, 6)
 
 -- Body
 local body = Instance.new("Frame")
-body.Size = UDim2.new(1,-24,1,-60)
-body.Position = UDim2.new(0,12,0,52)
+body.Size = UDim2.new(1,-24,1,-52)
+body.Position = UDim2.new(0,12,0,50)
 body.BackgroundTransparency = 1
 body.Parent = main
 
--- Token input label
+-- Token label
 local tokenLbl = Instance.new("TextLabel")
-tokenLbl.Size = UDim2.new(1,0,0,16)
+tokenLbl.Size = UDim2.new(1,0,0,14)
 tokenLbl.BackgroundTransparency = 1
 tokenLbl.Text = "Session Token — get this from website-six-bay-23.vercel.app"
 tokenLbl.TextColor3 = C.muted
-tokenLbl.TextSize = 11
+tokenLbl.TextSize = 10
 tokenLbl.Font = Enum.Font.Gotham
 tokenLbl.TextXAlignment = Enum.TextXAlignment.Left
 tokenLbl.Parent = body
 
 -- Token input
 local tokenInput = Instance.new("TextBox")
-tokenInput.Size = UDim2.new(1,-90,0,32)
-tokenInput.Position = UDim2.new(0,0,0,20)
+tokenInput.Size = UDim2.new(1,-88,0,30)
+tokenInput.Position = UDim2.new(0,0,0,17)
 tokenInput.BackgroundColor3 = C.surface
 tokenInput.TextColor3 = C.accent
-tokenInput.PlaceholderText = "Paste your session token here (spk_...)"
+tokenInput.PlaceholderText = "Paste session token (spk_...)"
 tokenInput.PlaceholderColor3 = C.muted
 tokenInput.TextSize = 11
 tokenInput.Font = Enum.Font.Code
@@ -150,12 +150,13 @@ tokenInput.ClearTextOnFocus = false
 tokenInput.BorderSizePixel = 0
 tokenInput.Parent = body
 uiCorner(tokenInput, 6)
-local tokenPad = Instance.new("UIPadding") tokenPad.PaddingLeft = UDim.new(0,10) tokenPad.Parent = tokenInput
+local tp = Instance.new("UIPadding")
+tp.PaddingLeft = UDim.new(0,10) tp.Parent = tokenInput
 
--- Open website button
+-- Website button
 local webBtn = Instance.new("TextButton")
-webBtn.Size = UDim2.new(0,80,0,32)
-webBtn.Position = UDim2.new(1,-80,0,20)
+webBtn.Size = UDim2.new(0,80,0,30)
+webBtn.Position = UDim2.new(1,-80,0,17)
 webBtn.BackgroundColor3 = C.surface
 webBtn.TextColor3 = C.text
 webBtn.Text = "🌐 Website"
@@ -164,25 +165,52 @@ webBtn.Font = Enum.Font.GothamBold
 webBtn.BorderSizePixel = 0
 webBtn.Parent = body
 uiCorner(webBtn,6)
+local ws = Instance.new("UIStroke")
+ws.Color = C.border ws.Thickness = 1 ws.Parent = webBtn
 
-local webBorderStroke = Instance.new("UIStroke")
-webBorderStroke.Color = C.border webBorderStroke.Thickness = 1 webBorderStroke.Parent = webBtn
+-- Context status bar
+local ctxBar = Instance.new("Frame")
+ctxBar.Size = UDim2.new(1,0,0,22)
+ctxBar.Position = UDim2.new(0,0,0,52)
+ctxBar.BackgroundColor3 = Color3.fromRGB(14,14,22)
+ctxBar.BorderSizePixel = 0
+ctxBar.Parent = body
+uiCorner(ctxBar, 5)
 
--- Activity log
+local ctxDot = Instance.new("Frame")
+ctxDot.Size = UDim2.new(0,6,0,6)
+ctxDot.Position = UDim2.new(0,10,0.5,-3)
+ctxDot.BackgroundColor3 = C.muted
+ctxDot.BorderSizePixel = 0
+ctxDot.Parent = ctxBar
+uiCorner(ctxDot, 99)
+
+local ctxLbl = Instance.new("TextLabel")
+ctxLbl.Size = UDim2.new(1,-24,1,0)
+ctxLbl.Position = UDim2.new(0,22,0,0)
+ctxLbl.BackgroundTransparency = 1
+ctxLbl.Text = "Context: not synced"
+ctxLbl.TextColor3 = C.muted
+ctxLbl.TextSize = 10
+ctxLbl.Font = Enum.Font.Gotham
+ctxLbl.TextXAlignment = Enum.TextXAlignment.Left
+ctxLbl.Parent = ctxBar
+
+-- Log label
 local logLbl = Instance.new("TextLabel")
-logLbl.Size = UDim2.new(1,0,0,20)
-logLbl.Position = UDim2.new(0,0,0,58)
+logLbl.Size = UDim2.new(1,0,0,18)
+logLbl.Position = UDim2.new(0,0,0,78)
 logLbl.BackgroundTransparency = 1
-logLbl.Text = "Open website-six-bay-23.vercel.app in your browser, then press Connect."
+logLbl.Text = "Open website-six-bay-23.vercel.app, sign in, paste token, click Connect."
 logLbl.TextColor3 = C.muted
-logLbl.TextSize = 11
+logLbl.TextSize = 10
 logLbl.Font = Enum.Font.Gotham
 logLbl.TextXAlignment = Enum.TextXAlignment.Left
 logLbl.TextTruncate = Enum.TextTruncate.AtEnd
 logLbl.Parent = body
 
 -- ============================================================
--- STATUS
+-- STATUS HELPERS
 -- ============================================================
 local function setStatus(connected, msg)
 	isConnected = connected
@@ -200,12 +228,146 @@ local function setStatus(connected, msg)
 		connectBtn.Text = "Connect"
 		connectBtn.BackgroundColor3 = C.accent
 		connectBtn.TextColor3 = Color3.fromRGB(12,12,12)
+		ctxDot.BackgroundColor3 = C.muted
+		ctxLbl.Text = "Context: not synced"
+		ctxLbl.TextColor3 = C.muted
 	end
 	if msg then logLbl.Text = msg end
 end
 
-local function setLog(msg)
-	logLbl.Text = msg
+local function setCtxStatus(chars)
+	ctxDot.BackgroundColor3 = C.success
+	ctxLbl.TextColor3 = C.success
+	ctxLbl.Text = "Context synced — " .. math.floor(chars/1000) .. "k chars (" .. os.date("%H:%M:%S") .. ")"
+end
+
+-- ============================================================
+-- GAME CONTEXT BUILDER
+-- Full scan: workspace tree + all script sources
+-- ============================================================
+local function buildContext()
+	local parts = {}
+
+	-- Workspace tree
+	table.insert(parts, "=== WORKSPACE ===")
+	local function scanInst(inst, depth)
+		if depth > 6 then return end
+		local prefix = string.rep("  ", depth)
+		for _, child in ipairs(inst:GetChildren()) do
+			if not child:IsA("Camera") and not child:IsA("Terrain") then
+				table.insert(parts, prefix .. child.ClassName .. " : " .. child.Name)
+				if #child:GetChildren() > 0 then
+					scanInst(child, depth + 1)
+				end
+			end
+		end
+	end
+	scanInst(game.Workspace, 0)
+
+	-- Other services
+	local services = {
+		"ServerScriptService","StarterGui","StarterPack",
+		"StarterPlayer","ReplicatedStorage","ServerStorage",
+		"Lighting","Teams","SoundService"
+	}
+	for _, svcName in ipairs(services) do
+		local svc = game:FindService(svcName)
+		if svc and #svc:GetChildren() > 0 then
+			table.insert(parts, "\n=== " .. svcName .. " ===")
+			local function scanSvc(inst, depth)
+				if depth > 4 then return end
+				local prefix = string.rep("  ", depth)
+				for _, child in ipairs(inst:GetChildren()) do
+					table.insert(parts, prefix .. child.ClassName .. " : " .. child.Name)
+					if #child:GetChildren() > 0 then
+						scanSvc(child, depth + 1)
+					end
+				end
+			end
+			scanSvc(svc, 1)
+		end
+	end
+
+	-- Full script sources
+	table.insert(parts, "\n=== SCRIPTS (FULL SOURCE) ===")
+	for _, obj in ipairs(game:GetDescendants()) do
+		if obj:IsA("Script") or obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
+			if obj ~= script then
+				table.insert(parts, "\n--- PATH: " .. obj:GetFullName() .. " [" .. obj.ClassName .. "] ---")
+				local src = obj.Source
+				if #src == 0 then
+					table.insert(parts, "-- (empty script)")
+				elseif #src > 5000 then
+					-- For very long scripts, include first 5000 chars
+					table.insert(parts, src:sub(1, 5000) .. "\n-- [TRUNCATED at 5000 chars, total: " .. #src .. "]")
+				else
+					table.insert(parts, src)
+				end
+			end
+		end
+	end
+
+	-- Game properties
+	table.insert(parts, "\n=== GAME INFO ===")
+	table.insert(parts, "PlaceId: " .. tostring(game.PlaceId))
+	table.insert(parts, "GameId: " .. tostring(game.GameId))
+	pcall(function()
+		table.insert(parts, "Studio Version: Roblox Studio")
+	end)
+
+	return table.concat(parts, "\n")
+end
+
+-- ============================================================
+-- CONTEXT PUSH LOOP
+-- ============================================================
+local function pushContext()
+	if not isConnected or sessionToken == "" then return end
+
+	ctxDot.BackgroundColor3 = C.info
+	ctxLbl.TextColor3 = C.info
+	ctxLbl.Text = "Syncing context..."
+
+	local ok, err = pcall(function()
+		local ctx = buildContext()
+		local r = Http:RequestAsync({
+			Url = BACKEND .. "/context",
+			Method = "POST",
+			Headers = {["Content-Type"] = "application/json"},
+			Body = Http:JSONEncode({
+				sessionToken = sessionToken,
+				context = ctx
+			})
+		})
+		if r.Success then
+			local data = Http:JSONDecode(r.Body)
+			setCtxStatus(data.chars or #ctx)
+		else
+			ctxDot.BackgroundColor3 = C.err
+			ctxLbl.TextColor3 = C.err
+			ctxLbl.Text = "Context sync failed: " .. r.StatusCode
+		end
+	end)
+
+	if not ok then
+		ctxDot.BackgroundColor3 = C.err
+		ctxLbl.TextColor3 = C.err
+		ctxLbl.Text = "Context error: " .. tostring(err):sub(1,40)
+	end
+end
+
+local function startContextLoop()
+	if contextLoop then task.cancel(contextLoop) end
+	contextLoop = task.spawn(function()
+		while isConnected do
+			pushContext()
+			task.wait(CTX_INTERVAL)
+		end
+	end)
+end
+
+local function stopContextLoop()
+	if contextLoop then task.cancel(contextLoop) contextLoop = nil end
 end
 
 -- ============================================================
@@ -287,7 +449,7 @@ local function executeActions(actions)
 end
 
 -- ============================================================
--- POLLING LOOP
+-- POLL LOOP — checks for pending actions from website
 -- ============================================================
 local function startPolling()
 	if pollLoop then task.cancel(pollLoop) end
@@ -306,64 +468,66 @@ local function startPolling()
 				local actions = result.actions or {}
 				if #actions > 0 then
 					local count = executeActions(actions)
-					setLog("✅ Executed " .. count .. " change" .. (count==1 and "" or "s") .. " from Spark website")
+					logLbl.Text = "✅ Applied " .. count .. " change" .. (count==1 and "" or "s") .. " from Spark"
+					-- push fresh context after changes
+					task.delay(1, pushContext)
 				end
 			elseif not ok then
-				-- connection lost
-				setStatus(false, "⚠️ Connection lost. Check your internet and try reconnecting.")
+				setStatus(false, "⚠️ Connection lost. Click Connect to retry.")
 				break
 			end
-
 			task.wait(POLL_INTERVAL)
 		end
 	end)
 end
 
 local function stopPolling()
-	if pollLoop then
-		task.cancel(pollLoop)
-		pollLoop = nil
-	end
+	if pollLoop then task.cancel(pollLoop) pollLoop = nil end
 end
 
 -- ============================================================
 -- CONNECT / DISCONNECT
 -- ============================================================
 local function connect()
-	local token = tokenInput.Text:gsub("%s","")
-	if token == "" then
-		setLog("⚠️ Please paste your session token first.")
+	local tok = tokenInput.Text:gsub("%s","")
+	if tok == "" then
+		logLbl.Text = "⚠️ Paste your token from website-six-bay-23.vercel.app first."
 		return
 	end
-	sessionToken = token
-	saveToken(token)
+	sessionToken = tok
+	saveToken(tok)
+	connectBtn.Text = "..."
+	connectBtn.BackgroundColor3 = C.muted
 
-	connectBtn.Text = "..." connectBtn.BackgroundColor3 = C.muted
-
-	-- Validate token with backend
 	local ok, result = pcall(function()
 		local r = Http:RequestAsync({
 			Url = BACKEND .. "/auth/validate",
 			Method = "POST",
-			Headers = {["Content-Type"] = "application/json"},
-			Body = Http:JSONEncode({ sessionToken = token })
+			Headers = {["Content-Type"]="application/json"},
+			Body = Http:JSONEncode({ sessionToken = tok })
 		})
 		return Http:JSONDecode(r.Body)
 	end)
 
 	if ok and result and result.valid then
-		setStatus(true, "✅ Connected as " .. (result.user and result.user.username or "user") .. " — chat at website-six-bay-23.vercel.app")
+		local name = result.user and result.user.username or "user"
+		setStatus(true, "✅ Connected as " .. name .. " · Syncing game every " .. CTX_INTERVAL .. "s")
 		startPolling()
+		startContextLoop() -- start pushing context immediately
 	else
-		setStatus(false, "❌ Invalid token. Get yours at website-six-bay-23.vercel.app")
+		setStatus(false, "❌ Invalid token. Sign in at website-six-bay-23.vercel.app and copy your token.")
 	end
 end
 
 local function disconnect()
 	stopPolling()
-	setStatus(false, "Disconnected. Press Connect to reconnect.")
+	stopContextLoop()
+	setStatus(false, "Disconnected. Click Connect to reconnect.")
 end
 
+-- ============================================================
+-- WIRE UP BUTTONS
+-- ============================================================
 connectBtn.MouseButton1Click:Connect(function()
 	if isConnected then disconnect() else connect() end
 end)
@@ -373,19 +537,14 @@ tokenInput.FocusLost:Connect(function(enter)
 end)
 
 webBtn.MouseButton1Click:Connect(function()
-	-- Can't open URLs from plugins directly, show the URL
-	setLog("🌐 Visit: website-six-bay-23.vercel.app to chat with AI")
+	logLbl.Text = "🌐 Visit: website-six-bay-23.vercel.app — sign in and copy your token"
 end)
 
--- ============================================================
--- AUTO-CONNECT on load if token saved
--- ============================================================
+-- Auto-connect if token saved
 if sessionToken ~= "" then
 	task.delay(1, connect)
 end
 
--- ============================================================
--- STARTUP
--- ============================================================
-print("⚡ Spark Plugin " .. VERSION .. " loaded!")
-print("   Visit website-six-bay-23.vercel.app to get started")
+print("⚡ Spark Plugin v2.1 loaded!")
+print("   Context pushed every " .. CTX_INTERVAL .. "s | Actions polled every " .. POLL_INTERVAL .. "s")
+print("   Visit website-six-bay-23.vercel.app")
