@@ -596,7 +596,6 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
 // ══════════════════════════════════════════════
 const API = 'https://alert-harmony-production.up.railway.app';
 const MODELS = [
-  {id:'gpt5',         label:'GPT-5',              tier:'free'},
   {id:'gpt4o',        label:'GPT-4o',             tier:'free'},
   {id:'gpt4o-mini',   label:'GPT-4o Mini',        tier:'free'},
   {id:'llama405b',    label:'Llama 3.1 405B',     tier:'free'},
@@ -612,7 +611,7 @@ const QUICK = ['Fix all bugs','Scan my game','Add leaderboard','Add checkpoints'
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-let user = null, token = null, currentModel = 'gpt5';
+let user = null, token = null, currentModel = 'gpt4o';
 let chatHistory = [], msgCount = 0, isProcessing = false;
 let pendingImage = null; // {base64, mimeType, dataUrl}
 let studioOnline = false, pollTimer = null;
