@@ -327,6 +327,14 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
 .detail-row:last-child{border:none;}
 .detail-label{font-weight:700;color:var(--text2);}
 .detail-val{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;}
+
+/* ── IMAGE UPLOAD ── */
+.img-upload-btn{width:38px;height:38px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.img-upload-btn:hover{border-color:var(--accent);color:var(--accent);}
+.input-with-preview{flex:1;display:flex;flex-direction:column;gap:6px;}
+.img-preview-wrap{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+.img-remove-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;}
+.img-remove-btn:hover{color:var(--error);background:rgba(255,77,109,0.1);}
 </style>
 </head>
 <body>
@@ -369,7 +377,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
     <div class="feature">
       <div class="feature-icon fi-blue">🤖</div>
       <h3>Free & Pro models</h3>
-      <p>Free tier uses GLM-5 and Llama 3.1. Upgrade to unlock GPT-4o, Claude 3.5 Sonnet, Grok 3, Gemini 2.5.</p>
+      <p>Free tier uses Gemini 2.0 Flash, GLM-5 and Llama 3.1. Upgrade to unlock GPT-4o, Claude 3.5, Grok 3, Gemini 2.5 Pro.</p>
     </div>
   </div>
   <div class="pricing" id="pricing">
@@ -381,7 +389,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
         <div class="plan-price">$0<sub>/mo</sub></div>
         <div class="plan-desc">Get started today</div>
         <ul class="plan-items">
-          <li><span class="ck">✓</span> GLM-5 & Llama 3.1</li>
+          <li><span class="ck">✓</span> Gemini 2.0 Flash (free)</li>
           <li><span class="ck">✓</span> 50 messages / day</li>
           <li><span class="ck">✓</span> Studio plugin</li>
           <li><span class="ck">✓</span> Game scanner</li>
@@ -525,7 +533,15 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
           <div class="input-area">
             <div class="quick-chips" id="quick-chips"></div>
             <div class="input-row">
-              <textarea class="chat-input" id="chat-input" placeholder="Describe what you want to build, fix, or create..." rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
+              <button class="img-upload-btn" id="img-upload-btn" onclick="document.getElementById('img-file-input').click()" title="Attach image">📎</button>
+              <input type="file" id="img-file-input" accept="image/*" style="display:none" onchange="onImageSelected(event)">
+              <div class="input-with-preview" id="input-with-preview">
+                <div class="img-preview-wrap" id="img-preview-wrap" style="display:none">
+                  <img id="img-preview-thumb" src="" style="max-height:60px;border-radius:6px;border:1px solid var(--border)">
+                  <button class="img-remove-btn" onclick="removeImage()" title="Remove image">✕</button>
+                </div>
+                <textarea class="chat-input" id="chat-input" placeholder="Describe what you want to build, fix, or create..." rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
+              </div>
               <button class="send-btn" id="send-btn" onclick="sendMsg()">Send ↑</button>
             </div>
           </div>
@@ -580,20 +596,25 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
 // ══════════════════════════════════════════════
 const API = 'https://alert-harmony-production.up.railway.app';
 const MODELS = [
-  {id:'glm5',    label:'GLM-5',           tier:'free'},
-  {id:'llama31', label:'Llama 3.1 8B',    tier:'free'},
-  {id:'gpt4o',   label:'GPT-4o',          tier:'paid'},
-  {id:'claude35',label:'Claude 3.5',      tier:'paid'},
-  {id:'grok3',   label:'Grok 3',          tier:'paid'},
-  {id:'gemini25',label:'Gemini 2.5',      tier:'paid'},
+  {id:'gpt5',         label:'GPT-5',              tier:'free'},
+  {id:'gpt4o',        label:'GPT-4o',             tier:'free'},
+  {id:'gpt4o-mini',   label:'GPT-4o Mini',        tier:'free'},
+  {id:'llama405b',    label:'Llama 3.1 405B',     tier:'free'},
+  {id:'mistral',      label:'Mistral Large',      tier:'free'},
+  {id:'gemini-flash', label:'Gemini 2.0 Flash',   tier:'free'},
+  {id:'glm5',         label:'GLM-5',              tier:'free'},
+  {id:'claude35',     label:'Claude 3.5',         tier:'paid'},
+  {id:'grok3',        label:'Grok 3',             tier:'paid'},
+  {id:'gemini25pro',  label:'Gemini 2.5 Pro',     tier:'paid'},
 ];
 const QUICK = ['Fix all bugs','Scan my game','Add leaderboard','Add checkpoints','Add DataStore','Make it multiplayer','Add sound effects','Explain my code'];
 
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-let user = null, token = null, currentModel = 'glm5';
+let user = null, token = null, currentModel = 'gpt5';
 let chatHistory = [], msgCount = 0, isProcessing = false;
+let pendingImage = null; // {base64, mimeType, dataUrl}
 let studioOnline = false, pollTimer = null;
 
 // ══════════════════════════════════════════════
@@ -982,16 +1003,62 @@ async function animateSteps(steps, delayMs=500) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+
+// ── IMAGE UPLOAD ──
+function onImageSelected(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) return;
+    pendingImage = { mimeType: match[1], base64: match[2], dataUrl };
+    document.getElementById('img-preview-thumb').src = dataUrl;
+    document.getElementById('img-preview-wrap').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removeImage() {
+  pendingImage = null;
+  document.getElementById('img-preview-wrap').style.display = 'none';
+  document.getElementById('img-preview-thumb').src = '';
+}
+
+function buildUserContent(text) {
+  if (!pendingImage) return text;
+  // Return multimodal content array for Gemini
+  return [
+    { type: 'text', text },
+    { type: 'image_url', image_url: { url: pendingImage.dataUrl } }
+  ];
+}
+
+function addUserMsgWithImage(text, imageDataUrl) {
+  const wrap = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg-wrap user-wrap';
+  const imgHtml = imageDataUrl ? `<img src="${imageDataUrl}" style="max-width:280px;max-height:180px;border-radius:8px;display:block;margin-bottom:6px;border:1px solid var(--border)">` : '';
+  div.innerHTML = `<div class="msg-meta"><span>You</span><div class="msg-avatar user-avatar">👤</div></div>
+    <div class="msg-bubble user-bubble">${imgHtml}${escHtml(text)}</div>`;
+  wrap.appendChild(div); scrollBottom();
+}
+
 // ── Main send flow ──
 async function sendMsg() {
   if (isProcessing) return;
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
-  if (!text) return;
+  if (!text && !pendingImage) return;
   input.value = ''; input.style.height = 'auto';
-  addUserMsg(text);
-  chatHistory.push({role:'user', content: text});
-  await runAgent(text);
+  const imageDataUrl = pendingImage ? pendingImage.dataUrl : null;
+  const content = buildUserContent(text || 'Analyze this image');
+  addUserMsgWithImage(text || 'Analyze this image', imageDataUrl);
+  chatHistory.push({role:'user', content});
+  removeImage();
+  await runAgent(text || 'Analyze this image', content);
 }
 
 async function executeOption(option) {
@@ -999,7 +1066,8 @@ async function executeOption(option) {
   await runAgentDirect(option);
 }
 
-async function runAgent(text) {
+async function runAgent(text, content) {
+  if (!content) content = text;
   isProcessing = true;
   document.getElementById('send-btn').disabled = true;
   setStatus('thinking', 'Spark is thinking...');
@@ -1010,7 +1078,7 @@ async function runAgent(text) {
     const res = await fetch(API+'/agent', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: text, model: currentModel, sessionToken: t })
+      body: JSON.stringify({ message: typeof content === 'string' ? content : text, content, model: currentModel, sessionToken: t })
     });
     const data = await res.json();
     typingEl.remove();
