@@ -970,9 +970,14 @@ function addSummaryCard(data) {
     `<div class="detail-row"><span class="detail-label">${d.label}</span><span class="detail-val">${d.value}</span></div>`
   ).join('');
 
+  // Clean up summary — never show raw JSON
+  let cleanSummary = data.summary || 'Done!';
+  if (cleanSummary.trim().startsWith('{')) {
+    try { const p = JSON.parse(cleanSummary); cleanSummary = p.reply || p.summary || 'Done!'; } catch(e) { cleanSummary = 'Done!'; }
+  }
   div.innerHTML = `
     <div class="msg-meta"><div class="msg-avatar ai-avatar">⚡</div><span>Spark</span></div>
-    <div class="msg-bubble ai-bubble">${escHtml(data.summary||'Done!')}</div>
+    <div class="msg-bubble ai-bubble">${escHtml(cleanSummary)}</div>
     ${changesHtml ? `<div class="summary-card"><div class="summary-section-title">What changed</div>${changesHtml}</div>` : ''}
     ${detailsHtml ? `<div class="summary-card" style="margin-top:8px"><div class="summary-section-title">Details</div>${detailsHtml}</div>` : ''}`;
   wrap.appendChild(div); scrollBottom();
@@ -1133,6 +1138,16 @@ async function runAgentDirect(option) {
 }
 
 async function showAgentResult(data) {
+  // If summary looks like raw JSON, extract the reply field from it
+  if (data.summary && data.summary.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(data.summary);
+      if (parsed.reply) data.summary = parsed.reply;
+      if (parsed.actions && parsed.actions.length > 0 && (!data.actions || data.actions.length === 0)) {
+        data.actions = parsed.actions;
+      }
+    } catch(e) {}
+  }
   const plan = data.plan || {};
 
   // Show steps card
