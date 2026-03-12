@@ -274,6 +274,58 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
   .sidebar{display:none;}
   .stats{grid-template-columns:1fr;}
 }
+
+/* ── OPTION CARDS ── */
+.options-grid{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-width:520px;}
+.option-btn{padding:11px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;text-align:left;cursor:pointer;transition:all 0.15s;animation:msgIn 0.2s ease both;}
+.option-btn:nth-child(1){animation-delay:0.05s}
+.option-btn:nth-child(2){animation-delay:0.1s}
+.option-btn:nth-child(3){animation-delay:0.15s}
+.option-btn:nth-child(4){animation-delay:0.2s}
+.option-btn:nth-child(5){animation-delay:0.25s}
+.option-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(245,200,66,0.06);}
+.option-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.option-btn.option-selected{border-color:var(--accent);background:rgba(245,200,66,0.1);color:var(--accent);}
+.option-custom{border-style:dashed;}
+.custom-input-wrap{margin-top:10px;max-width:520px;animation:msgIn 0.2s ease both;}
+.custom-input-row{display:flex;gap:8px;}
+.custom-input{flex:1;padding:11px 14px;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;}
+
+/* ── AGENT CARD ── */
+.agent-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:8px;max-width:560px;animation:msgIn 0.2s ease both;}
+.agent-card-header{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);}
+.agent-card-icon{font-size:14px;}
+.agent-card-title{font-size:13px;font-weight:700;flex:1;}
+.agent-card-status{font-size:11px;color:var(--text2);font-weight:600;}
+
+/* ── INVESTIGATION LIST ── */
+.inv-list{padding:8px 0;border-bottom:1px solid var(--border);}
+.inv-item{display:flex;align-items:center;gap:8px;padding:7px 16px;font-size:12px;color:var(--text2);transition:color 0.2s;}
+.inv-icon{font-size:13px;width:16px;text-align:center;}
+.inv-label{flex:1;}
+.inv-status{font-size:10px;font-weight:700;color:var(--muted);}
+
+/* ── STEPS CHECKLIST ── */
+.steps-checklist{padding:8px 0;}
+.steps-header{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:4px 16px 8px;}
+.step-check{display:flex;gap:10px;padding:8px 16px;transition:opacity 0.2s;opacity:0.5;}
+.step-check-box{font-size:14px;color:var(--muted);flex-shrink:0;width:16px;transition:color 0.2s;}
+.step-check-title{font-size:12px;font-weight:700;margin-bottom:2px;}
+.step-check-desc{font-size:11px;color:var(--text2);}
+
+/* ── SUMMARY CARD ── */
+.summary-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-top:8px;max-width:560px;animation:msgIn 0.2s ease both;}
+.summary-section-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.change-row{display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.change-row:last-child{border:none;}
+.change-dot{font-size:10px;}
+.change-type{font-weight:700;color:var(--text2);text-transform:uppercase;font-size:10px;letter-spacing:1px;width:44px;flex-shrink:0;}
+.change-path{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--surface);padding:2px 6px;border-radius:4px;color:var(--accent);}
+.change-desc{color:var(--text2);flex:1;}
+.detail-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.detail-row:last-child{border:none;}
+.detail-label{font-weight:700;color:var(--text2);}
+.detail-val{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;}
 </style>
 </head>
 <body>
@@ -452,8 +504,6 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
       <!-- ── CHAT ── -->
       <div class="tab" id="tab-chat">
         <div class="chat-layout">
-
-          <!-- Model bar -->
           <div class="model-bar">
             <div id="model-btns"></div>
             <div class="studio-pill" id="studio-pill">
@@ -461,22 +511,16 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
               <span id="studio-pill-text">Studio offline</span>
             </div>
           </div>
-
-          <!-- Messages -->
           <div class="messages" id="messages">
             <div class="msg-wrap">
               <div class="msg-meta"><div class="msg-avatar ai-avatar">⚡</div><span>Spark</span></div>
-              <div class="msg-bubble ai-bubble">Hey! Connect Roblox Studio using the plugin, then describe what you want to build. I'll show you every action as it happens.</div>
+              <div class="msg-bubble ai-bubble">Hey! Connect Studio with the plugin, then tell me what you want to build or fix. I'll investigate your game and show you each step as I work.</div>
             </div>
           </div>
-
-          <!-- Live status strip -->
           <div class="status-strip" id="status-strip">
             <div class="s-dot"></div>
             <span id="status-text">Ready</span>
           </div>
-
-          <!-- Input -->
           <div class="input-area">
             <div class="quick-chips" id="quick-chips"></div>
             <div class="input-row">
@@ -484,7 +528,6 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 4
               <button class="send-btn" id="send-btn" onclick="sendMsg()">Send ↑</button>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -707,209 +750,337 @@ async function checkConn() {
 }
 
 // ══════════════════════════════════════════════
-// CHAT
+// CHAT — Lemonade-style agent
 // ══════════════════════════════════════════════
 function setStatus(mode, txt) {
   const strip = document.getElementById('status-strip');
   strip.className = 'status-strip ' + mode;
   document.getElementById('status-text').textContent = txt;
 }
-
 function onKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
 function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,140)+'px'; }
+function scrollBottom() { const m = document.getElementById('messages'); setTimeout(() => m.scrollTop = m.scrollHeight, 50); }
+function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 
-function scrollBottom() {
-  const m = document.getElementById('messages');
-  setTimeout(() => m.scrollTop = m.scrollHeight, 50);
-}
-
-// Add user message bubble
+// ── Add user bubble ──
 function addUserMsg(text) {
   const wrap = document.getElementById('messages');
   const div = document.createElement('div');
   div.className = 'msg-wrap user-wrap';
-  div.innerHTML = `
-    <div class="msg-meta"><span>You</span><div class="msg-avatar user-avatar">👤</div></div>
+  div.innerHTML = `<div class="msg-meta"><span>You</span><div class="msg-avatar user-avatar">👤</div></div>
     <div class="msg-bubble user-bubble">${escHtml(text)}</div>`;
   wrap.appendChild(div); scrollBottom();
 }
 
-// Add typing indicator, returns element to remove later
-function addTyping() {
+// ── Typing indicator ──
+function addTyping(label='Spark is thinking') {
   const wrap = document.getElementById('messages');
   const div = document.createElement('div');
   div.className = 'typing-msg'; div.id = 'typing-indicator';
-  div.innerHTML = `
-    <div class="msg-avatar ai-avatar" style="width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">⚡</div>
+  div.innerHTML = `<div class="msg-avatar ai-avatar" style="width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">⚡</div>
     <div class="typing-bubble">
+      <span style="font-size:11px;color:var(--text2);margin-right:8px">${label}</span>
       <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
     </div>`;
   wrap.appendChild(div); scrollBottom();
   return div;
 }
 
-// Add AI message with streaming text + action feed
-function addAIMsg(text, actions=[]) {
+// ── Options card — user picks where to start ──
+function addOptionsCard(question, options) {
   const wrap = document.getElementById('messages');
   const div = document.createElement('div');
   div.className = 'msg-wrap';
-  const actionsId = 'actions-' + Date.now();
+  div.id = 'options-card';
+
+  const opts = [...options];
+  // Always ensure last option is custom
+  if (!opts[opts.length-1].toLowerCase().includes('something else') && !opts[opts.length-1].toLowerCase().includes('custom')) {
+    opts.push('Something else — I\'ll describe it myself');
+  }
+
+  const optHtml = opts.map((o, i) => {
+    const isCustom = o.toLowerCase().includes('something else') || o.toLowerCase().includes('describe it');
+    return `<button class="option-btn ${isCustom?'option-custom':''}" onclick="pickOption(${i}, ${JSON.stringify(o)})">${isCustom ? '✏️ ' : ''}${escHtml(o)}</button>`;
+  }).join('');
+
   div.innerHTML = `
     <div class="msg-meta"><div class="msg-avatar ai-avatar">⚡</div><span>Spark</span></div>
-    <div class="msg-bubble ai-bubble streaming" id="bubble-${actionsId}"></div>
-    <div class="action-feed" id="${actionsId}"></div>`;
-  wrap.appendChild(div);
+    <div class="msg-bubble ai-bubble">${escHtml(question)}</div>
+    <div class="options-grid">${optHtml}</div>
+    <div class="custom-input-wrap" id="custom-input-wrap" style="display:none">
+      <div class="custom-input-row">
+        <input class="custom-input" id="custom-prompt-input" placeholder="Describe what you want to build...">
+        <button class="send-btn" style="padding:10px 16px;font-size:13px" onclick="submitCustom()">Go →</button>
+      </div>
+    </div>`;
+  wrap.appendChild(div); scrollBottom();
+}
 
-  // Stream the text character by character
-  const bubble = div.querySelector(`#bubble-${actionsId}`);
-  let i = 0;
-  const streamInterval = setInterval(() => {
-    if (i < text.length) {
-      bubble.textContent = text.slice(0, ++i);
-      scrollBottom();
-    } else {
-      bubble.classList.remove('streaming');
-      clearInterval(streamInterval);
-      // Now animate the actions
-      if (actions.length > 0) animateActions(actionsId, actions);
+function pickOption(idx, option) {
+  // If custom option
+  if (option.toLowerCase().includes('something else') || option.toLowerCase().includes('describe it')) {
+    document.getElementById('custom-input-wrap').style.display = 'block';
+    document.getElementById('custom-prompt-input').focus();
+    return;
+  }
+  // Disable all option buttons
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+  // Highlight selected
+  document.querySelectorAll('.option-btn')[idx].classList.add('option-selected');
+  // Execute the chosen option
+  executeOption(option);
+}
+
+function submitCustom() {
+  const input = document.getElementById('custom-prompt-input');
+  const val = input.value.trim();
+  if (!val) return;
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+  input.disabled = true;
+  // Add as user message
+  addUserMsg(val);
+  executeOption(val);
+}
+
+// ── Agent steps card ──
+function addStepsCard(plan) {
+  const wrap = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg-wrap';
+  div.id = 'steps-card';
+
+  const invHtml = (plan.investigations || []).map(inv => `
+    <div class="inv-item" id="inv-${inv.action}-${inv.target.replace(/[^a-z0-9]/gi,'_')}">
+      <span class="inv-icon">🔍</span>
+      <span class="inv-label">${inv.action.replace('_',' ')} — ${inv.target.split('.').pop()}</span>
+      <span class="inv-status">pending</span>
+    </div>`).join('');
+
+  const stepsHtml = (plan.steps || []).map((s, i) => `
+    <div class="step-check" id="step-check-${i}">
+      <div class="step-check-box">□</div>
+      <div>
+        <div class="step-check-title">${escHtml(s.title)}</div>
+        <div class="step-check-desc">${escHtml(s.description)}</div>
+      </div>
+    </div>`).join('');
+
+  div.innerHTML = `
+    <div class="msg-meta"><div class="msg-avatar ai-avatar">⚡</div><span>Spark</span></div>
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <span class="agent-card-icon">⚙️</span>
+        <span class="agent-card-title">Working on the task</span>
+        <span class="agent-card-status" id="agent-status-label">Investigating...</span>
+      </div>
+      ${invHtml ? `<div class="inv-list">${invHtml}</div>` : ''}
+      <div class="steps-checklist">
+        <div class="steps-header">Steps (0/${(plan.steps||[]).length})</div>
+        ${stepsHtml}
+      </div>
+    </div>`;
+  wrap.appendChild(div); scrollBottom();
+}
+
+function updateInvestigation(action, target, status) {
+  const id = 'inv-' + action + '-' + target.replace(/[^a-z0-9]/gi,'_');
+  const el = document.getElementById(id);
+  if (!el) return;
+  const statusEl = el.querySelector('.inv-status');
+  if (status === 'done') {
+    el.querySelector('.inv-icon').textContent = '✓';
+    el.style.color = 'var(--success)';
+    if (statusEl) statusEl.textContent = 'done';
+  } else if (status === 'running') {
+    el.style.color = 'var(--info)';
+    if (statusEl) statusEl.textContent = '...';
+  }
+}
+
+function updateStep(idx, done) {
+  const el = document.getElementById('step-check-' + idx);
+  if (!el) return;
+  const box = el.querySelector('.step-check-box');
+  if (done) {
+    box.textContent = '✓';
+    box.style.color = 'var(--success)';
+    el.style.opacity = '1';
+    const header = document.querySelector('.steps-header');
+    if (header) {
+      const total = document.querySelectorAll('.step-check').length;
+      const doneCnt = idx + 1;
+      header.textContent = `Steps (${doneCnt}/${total})`;
     }
-  }, 12);
-
+  } else {
+    box.textContent = '◉';
+    box.style.color = 'var(--accent)';
+  }
   scrollBottom();
 }
 
-// Animate actions one by one with state transitions
-function animateActions(feedId, actions) {
-  const feed = document.getElementById(feedId);
-  if (!feed) return;
+// ── Final summary card ──
+function addSummaryCard(data) {
+  const wrap = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg-wrap';
 
-  const actionTypes = {
-    create_script:   { icon: '📝', label: a => `Create script: ${a.name || 'Script'}` },
-    edit_script:     { icon: '✏️',  label: a => `Edit script: ${(a.path||'').split('.').pop()}` },
-    create_instance: { icon: '🧱', label: a => `Create ${a.className}: ${a.name || a.className}` },
-    delete_instance: { icon: '🗑️', label: a => `Delete: ${(a.path||'').split('.').pop()}` },
-    set_property:    { icon: '⚙️', label: a => `Set ${a.property} on ${(a.path||'').split('.').pop()}` },
-  };
+  const changesHtml = (data.changes || []).map(c => {
+    const icons = {created:'🟢',edited:'🟡',deleted:'🔴'};
+    return `<div class="change-row">
+      <span class="change-dot" style="color:${c.type==='created'?'var(--success)':c.type==='edited'?'var(--warn)':'var(--error)'}">${icons[c.type]||'●'}</span>
+      <span class="change-type">${c.type}</span>
+      <code class="change-path">${(c.path||'').split('.').slice(-2).join('/')}</code>
+      <span class="change-desc">— ${c.description||''}</span>
+    </div>`;
+  }).join('');
 
-  // First render all as pending
-  const items = actions.map((a, i) => {
-    const def = actionTypes[a.type] || { icon: '🔧', label: a => a.type };
-    const el = document.createElement('div');
-    el.className = 'action-item pending';
-    el.id = 'action-' + feedId + '-' + i;
-    el.innerHTML = `
-      <span class="action-icon">${def.icon}</span>
-      <span class="action-label">${def.label(a)}</span>
-      <span class="action-badge badge-pending">pending</span>`;
-    el.style.animationDelay = (i * 0.06) + 's';
-    feed.appendChild(el);
-    return el;
-  });
+  const detailsHtml = (data.details || []).map(d =>
+    `<div class="detail-row"><span class="detail-label">${d.label}</span><span class="detail-val">${d.value}</span></div>`
+  ).join('');
 
-  scrollBottom();
-
-  // Then run each one with a delay
-  actions.forEach((a, i) => {
-    const el = items[i];
-    const def = actionTypes[a.type] || { icon: '🔧', label: a => a.type };
-
-    // After short delay, mark running
-    setTimeout(() => {
-      el.className = 'action-item running';
-      el.innerHTML = `
-        <span class="action-icon">${def.icon}</span>
-        <span class="action-label">${def.label(a)}</span>
-        <span class="action-badge badge-running">running</span>
-        <div style="width:100%"><div class="action-progress"><div class="action-progress-bar" style="width:0%" id="bar-${feedId}-${i}"></div></div></div>`;
-      setStatus('executing', `Executing: ${def.label(a)}...`);
-      // Animate progress bar
-      const bar = document.getElementById(`bar-${feedId}-${i}`);
-      let w = 0;
-      const barInt = setInterval(() => {
-        w = Math.min(w + Math.random() * 25, 90);
-        if (bar) bar.style.width = w + '%';
-        if (w >= 90) clearInterval(barInt);
-      }, 120);
-
-      // After more delay, mark done
-      setTimeout(() => {
-        clearInterval(barInt);
-        if (bar) bar.style.width = '100%';
-        setTimeout(() => {
-          el.className = 'action-item done';
-          el.innerHTML = `
-            <span class="action-icon">${def.icon}</span>
-            <span class="action-label">${def.label(a)}</span>
-            <span class="action-badge badge-done">✓ done</span>`;
-          // If last action
-          if (i === actions.length - 1) {
-            setStatus('done', `Done! ${actions.length} change${actions.length===1?'':'s'} synced to Studio`);
-            document.getElementById('stat-msgs').textContent = ++msgCount;
-          }
-          scrollBottom();
-        }, 200);
-      }, 600 + Math.random() * 400);
-
-      scrollBottom();
-    }, i * 700);
-  });
+  div.innerHTML = `
+    <div class="msg-meta"><div class="msg-avatar ai-avatar">⚡</div><span>Spark</span></div>
+    <div class="msg-bubble ai-bubble">${escHtml(data.summary||'Done!')}</div>
+    ${changesHtml ? `<div class="summary-card"><div class="summary-section-title">What changed</div>${changesHtml}</div>` : ''}
+    ${detailsHtml ? `<div class="summary-card" style="margin-top:8px"><div class="summary-section-title">Details</div>${detailsHtml}</div>` : ''}`;
+  wrap.appendChild(div); scrollBottom();
 }
 
+// ── Animate investigation items with delay ──
+async function animateInvestigations(investigations, delayMs=400) {
+  for (let i = 0; i < investigations.length; i++) {
+    const inv = investigations[i];
+    updateInvestigation(inv.action, inv.target, 'running');
+    await sleep(delayMs);
+    updateInvestigation(inv.action, inv.target, 'done');
+  }
+}
+
+// ── Animate steps checklist ──
+async function animateSteps(steps, delayMs=500) {
+  for (let i = 0; i < steps.length; i++) {
+    updateStep(i, false); // mark active
+    await sleep(delayMs);
+    updateStep(i, true);  // mark done
+    scrollBottom();
+  }
+  const label = document.getElementById('agent-status-label');
+  if (label) { label.textContent = 'Task completed ✓'; label.style.color = 'var(--success)'; }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Main send flow ──
 async function sendMsg() {
   if (isProcessing) return;
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text) return;
   input.value = ''; input.style.height = 'auto';
-
   addUserMsg(text);
   chatHistory.push({role:'user', content: text});
+  await runAgent(text);
+}
+
+async function executeOption(option) {
+  chatHistory.push({role:'user', content: option});
+  await runAgentDirect(option);
+}
+
+async function runAgent(text) {
   isProcessing = true;
   document.getElementById('send-btn').disabled = true;
-
-  // Show typing
   setStatus('thinking', 'Spark is thinking...');
-  const typingEl = addTyping();
+  const typingEl = addTyping('Analyzing your request');
 
   try {
     const t = token || localStorage.getItem('spark_token');
-    const res = await fetch(API+'/generate', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        messages: chatHistory.slice(-8),
-        model: currentModel,
-        sessionToken: t
-      })
+    const res = await fetch(API+'/agent', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: text, model: currentModel, sessionToken: t })
     });
     const data = await res.json();
     typingEl.remove();
 
-    const reply = data.reply || 'Done!';
-    const actions = data.actions || [];
-    chatHistory.push({role:'assistant', content: reply});
-
-    setStatus('executing', actions.length > 0 ? `Sending ${actions.length} action${actions.length===1?'':'s'} to Studio...` : 'Responding...');
-    addAIMsg(reply, actions);
-
-    if (actions.length === 0) {
-      setStatus('done', 'Ready');
-      msgCount++;
-      document.getElementById('stat-msgs').textContent = msgCount;
+    if (data.phase === 'options') {
+      // Show option cards
+      setStatus('', 'Choose how to proceed');
+      addOptionsCard(data.question, data.options);
+    } else if (data.phase === 'complete') {
+      await showAgentResult(data);
+    } else {
+      addSummaryCard({ summary: data.error || 'Something went wrong', changes: [], details: [] });
+      setStatus('error', 'Error');
     }
-
   } catch(e) {
     typingEl.remove();
-    addAIMsg('⚠️ Error: ' + e.message, []);
-    setStatus('error', 'Error — check your connection');
+    addSummaryCard({ summary: '⚠️ Error: ' + e.message, changes: [], details: [] });
+    setStatus('error', 'Connection error');
   }
-
   isProcessing = false;
   document.getElementById('send-btn').disabled = false;
 }
 
-function escHtml(t) {
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+async function runAgentDirect(option) {
+  isProcessing = true;
+  document.getElementById('send-btn').disabled = true;
+  setStatus('thinking', 'Planning...');
+  const typingEl = addTyping('Planning the task');
+
+  try {
+    const t = token || localStorage.getItem('spark_token');
+    const res = await fetch(API+'/agent/option', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ option, model: currentModel, sessionToken: t })
+    });
+    const data = await res.json();
+    typingEl.remove();
+
+    if (data.phase === 'complete') {
+      await showAgentResult(data);
+    } else {
+      addSummaryCard({ summary: data.error || 'Something went wrong', changes:[], details:[] });
+      setStatus('error', 'Error');
+    }
+  } catch(e) {
+    typingEl.remove();
+    addSummaryCard({ summary: '⚠️ Error: ' + e.message, changes:[], details:[] });
+    setStatus('error', 'Error');
+  }
+  isProcessing = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+async function showAgentResult(data) {
+  const plan = data.plan || {};
+
+  // Show steps card
+  addStepsCard(plan);
+  setStatus('executing', 'Investigating game...');
+  await sleep(300);
+
+  // Animate investigations
+  if (plan.investigations && plan.investigations.length > 0) {
+    await animateInvestigations(plan.investigations, 500);
+  }
+
+  // Animate steps
+  if (plan.steps && plan.steps.length > 0) {
+    setStatus('executing', 'Executing changes...');
+    await animateSteps(plan.steps, 600);
+  }
+
+  await sleep(400);
+
+  // Show final summary
+  addSummaryCard(data);
+  setStatus('done', `Done! ${(data.actions||[]).length} change${(data.actions||[]).length===1?'':'s'} synced to Studio`);
+  msgCount++;
+  document.getElementById('stat-msgs').textContent = msgCount;
+  scrollBottom();
 }
 
 function copyToken() {
