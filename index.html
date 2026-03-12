@@ -802,7 +802,7 @@ function addOptionsCard(question, options) {
 
   const optHtml = opts.map((o, i) => {
     const isCustom = o.toLowerCase().includes('something else') || o.toLowerCase().includes('describe it');
-    return `<button class="option-btn ${isCustom?'option-custom':''}" onclick="pickOption(${i}, ${JSON.stringify(o)})">${isCustom ? '✏️ ' : ''}${escHtml(o)}</button>`;
+    return `<button class="option-btn ${isCustom?'option-custom':''}" data-idx="${i}" data-opt="${o.replace(/"/g,'&quot;')}">${isCustom ? '✏️ ' : ''}${escHtml(o)}</button>`;
   }).join('');
 
   div.innerHTML = `
@@ -812,10 +812,20 @@ function addOptionsCard(question, options) {
     <div class="custom-input-wrap" id="custom-input-wrap" style="display:none">
       <div class="custom-input-row">
         <input class="custom-input" id="custom-prompt-input" placeholder="Describe what you want to build...">
-        <button class="send-btn" style="padding:10px 16px;font-size:13px" onclick="submitCustom()">Go →</button>
+        <button class="send-btn" style="padding:10px 16px;font-size:13px" id="custom-go-btn">Go →</button>
       </div>
     </div>`;
-  wrap.appendChild(div); scrollBottom();
+  wrap.appendChild(div);
+  // Attach click handlers after DOM insert
+  div.querySelectorAll('.option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const opt = btn.dataset.opt;
+      pickOption(idx, opt);
+    });
+  });
+  div.querySelector('#custom-go-btn').addEventListener('click', submitCustom);
+  scrollBottom();
 }
 
 function pickOption(idx, option) {
